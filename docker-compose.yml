@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  ndbi040-web:
+    container_name: ndbi040-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - raven-network-ndbi040
+  ndbi040-ravendb:
+    image: ravendb/ravendb:latest
+    ports:
+      - "8080:8080"
+      - "38888:38888"
+    environment:
+      - RAVEN_Security_UnsecuredAccessAllowed=PublicNetwork
+      - RAVEN_Setup_Mode=None
+      - RAVEN_License_Eula_Accepted=true
+    networks:
+      - raven-network-ndbi040
+
+networks:
+  raven-network-ndbi040:
+    driver: bridge
