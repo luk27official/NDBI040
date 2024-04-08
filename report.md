@@ -1,5 +1,4 @@
-**Perform a static analysis of the supported data models and query languages. Specifically, for each
-supported data model, determine the following:**
+**Perform a static analysis of the supported data models and query languages. Specifically, for each supported data model, determine the following:**
 
 In the following section, I will be using Node.js to provide examples etc. RavenDB provides support for C#, Java, Python and Node.js.
 
@@ -56,30 +55,31 @@ In the following section, I will be using Node.js to provide examples etc. Raven
 | Nesting                           | ?                        | ?                                                |
 | MapReduce                         | (using indexes)          | ?                                                |
 
-**Perform deployment of the DBMS (e.g. in Docker) and perform an experimental analysis of the
-querying:**
+**Perform deployment of the DBMS (e.g. in Docker) and perform an experimental analysis of the querying:**
 
-Queries with explanations are in the `queries.md` file, results in the `results.csv` file. To run the queries, see the `query_executor.py` file.
+Queries with explanations are in the `queries.md` file, results in the `results.csv` file. To run the raw queries, see the `query_executor.py` file. Optionally, to run the Node.js queries, run `npm i` and then run `npx tsc query_ts_executor.ts; node --max-old-space-size=4096 query_ts_executor.js`. 
 
-| Query   | RQL avg (ms) | Node.js avg (ms) |
-| ------- | ------------ | ---------------- |
-| 3.1.1*  | ~6100        |                  |
-| 3.1.2*  | ~15200       |                  |
-| 3.1.3   | 120.95       |                  |
-| 3.1.4   | 463.45       |                  |
-| 3.2.1   | 8.2          |                  |
-| 3.2.2** | -            |                  |
-| 3.3.1*  | -            |                  |
-| 3.3.2   | 1950.7       |                  |
-| 3.3.3   | 2630.7       |                  |
-| 3.3.4** | -            |                  |
-| 3.3.5** | -            |                  |
-| 3.4.1** | -            |                  |
-| 3.4.2   | 530.75       |                  |
-| 3.4.3** | -            |                  |
-| 3.5.1*  | ~14300       |                  |
-| 3.5.2   | 997.8        |                  |
-| 3.6.1   | 799.65       |                  |
-| 3.7     | 99.9         |                  |
+| Query   | RQL avg (ms) | Node.js avg (ms) | Node.js avg no cache (ms) |
+| ------- | ------------ | ---------------- | ------------------------- |
+| 3.1.1*  | ~6100        | -                | -                         |
+| 3.1.2*  | ~15200       | -                | -                         |
+| 3.1.3   | 120.95       | 650.3            | 984.4                     |
+| 3.1.4   | 463.45       | 8406             | 10691.4                   |
+| 3.2.1   | 8.2          | 8.1              | 21.3                      |
+| 3.2.2** | -            | -                | -                         |
+| 3.3.1*  | -            | -                | -                         |
+| 3.3.2   | 1950.7       | -                | -                         |
+| 3.3.3   | 2630.7       | -                | -                         |
+| 3.3.4** | -            | -                | -                         |
+| 3.3.5** | -            | -                | -                         |
+| 3.4.1** | -            | -                | -                         |
+| 3.4.2   | 530.75       | 610.55           | 2140.7                    |
+| 3.4.3** | -            | -                | -                         |
+| 3.5.1*  | ~14300       | -                | -                         |
+| 3.5.2   | 997.8        | 11744.1          | 14921.7                   |
+| 3.6.1   | 799.65       | 4.1              | 1097                      |
+| 3.7     | 99.9         | 893.9            | 1214.1                    |
 
 Meanings: (*) stands for manual average - autoindex gets created automatically, (**) stands for unavailable feature
+
+To clarify the results, caching plays a role in both of the types of queries, moreover, Node.js queries are most likely converted into less-efficient SQL/RQL queries. Also, notice that Node.js queries include the JS overhead (unlike the Python queries, including the query times directly in the result). If needed, play around with the queries yourself. Overall, we may see that raw queries perform the best.

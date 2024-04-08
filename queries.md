@@ -3,27 +3,41 @@ NOTE: RavenDB can only perform searches on indexed columns. This means that ever
 > https://ravendb.net/docs/article-page/6.0/nodejs/client-api/session/querying/how-to-query
 
 **3.1.1**
-Filtering on a non-indexed column, exact match
+Filtering on a non-indexed column, exact match (see NOTE)
 RQL: `from "yelp_academic_dataset_business" where search("name", "A*")`
-(it used an index automatically, otherwise ~6.1s)
+Node.js: Not available.
 
 **3.1.2**
-Filtering on a non-indexed column, range query
+Filtering on a non-indexed column, range query (see NOTE)
 RQL: `from "yelp_academic_dataset_business" where stars < 5 and stars > 2`
-(without index ~15.2s)
+Node.js: Not available.
 
 **3.1.3**
 Filtering on a indexed column, exact match
 RQL: `from "yelp_academic_dataset_business" where search("name", "A*")`
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_business" })
+    .whereRegex("name", "^A").all();
+```
 
 **3.1.4**
 Filtering on a indexed column, range query
 RQL: `from "yelp_academic_dataset_business" where stars < 5 and stars > 2`
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_business" })
+    .whereBetween("stars", 3, 4).all();
+```
 
 **3.2.1**
 Use aggregation function count
 RQL: `from "yelp_academic_dataset_user_filtered" group by "review_count" select key() as "key", count() as "Count"`
-(without index ~15.1s)
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_user_filtered" })
+    .groupBy("review_count").selectKey().selectCount().all();
+```
 
 **3.2.2**
 Similarly, express a query for aggregate function MAX
@@ -33,8 +47,9 @@ Similarly, express a query for aggregate function MAX
 **3.3.1**
 Note that the joins are not really joins as the "joining" is here represented by embedding the documents by the given references.
 
-Joining / traversal where two entities are connected by non-indexed columns (with limit of 100k)
-RQL: ```
+Joining / traversal where two entities are connected by non-indexed columns (with limit of 100k, see NOTE)
+RQL:
+```
 from "yelp_academic_dataset_tip_refs" as t
 load t.reference_user_id as u
 select {
@@ -43,11 +58,12 @@ select {
 }
 limit 100000
 ```
-(without index unknown)
+Node.js: Not available.
 
 **3.3.2**
 Joining / traversal over indexed column (with limit of 100k)
-RQL: ```
+RQL:
+```
 from "yelp_academic_dataset_tip_refs" as t
 load t.reference_user_id as u
 select {
@@ -56,6 +72,7 @@ select {
 }
 limit 100000
 ```
+Node.js: Not available.
 
 **3.3.3**
 Complex join involving multiple JOINS (with limit of 100k)
@@ -70,6 +87,7 @@ select {
 }
 limit 100000
 ```
+Node.js: Not available.
 
 **3.3.4**
 Recursive query
@@ -89,6 +107,14 @@ Union
 **3.4.2**
 Intersection
 RQL: `from "yelp_academic_dataset_tip_refs" where intersect(search("text", "*chicken*"), compliment_count == 0)`
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_tip_refs" })
+    .whereRegex("text", "chicken")
+    .intersect()
+    .whereEquals("compliment_count", 0)
+    .all();
+```
 
 **3.4.3**
 Difference
@@ -96,17 +122,27 @@ Difference
 > https://ravendb.net/docs/article-page/6.0/nodejs/client-api/session/querying/what-is-rql
 
 **3.5.1**
-Sorting over non-indexed column
+Sorting over non-indexed column (see NOTE)
 RQL: `from "yelp_academic_dataset_business" order by latitude asc`
-(without index ~14.3s)
+Node.js: Not available.
 
 **3.5.2**
 Sorting over indexed column
 RQL: `from "yelp_academic_dataset_business" order by latitude asc`
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_business" })
+    .orderBy("latitude").all();
+```
 
 **3.6.1**
 Apply distinct
 RQL: `from "yelp_academic_dataset_business" select distinct state`
+Node.js:
+```ts
+const results = await session.query({ collection: "yelp_academic_dataset_business" })
+    .selectFields("state").distinct().all();
+```
 
 **3.7**
 MapReduce - count tips by businesses
@@ -130,3 +166,7 @@ select new {
 }
 ```
 Then, the RQL query may be used: `from index "count-tips-by-business"`.
+Node.js:
+```ts
+const results = await session.query({ indexName: "count-tips-by-business" }).all();
+```

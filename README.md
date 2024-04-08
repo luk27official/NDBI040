@@ -21,6 +21,8 @@ To import the Yelp dataset, do the following:
 ## Running the queries for Yelp
 
 1. Python: Run `python query_executor.py`.
+2. (Optional - Node.js): Install dependencies with `npm i`.
+3. (Optional - Node.js): Run `npx tsc query_ts_executor.ts; node --max-old-space-size=4096 query_ts_executor.js`.
 
 ## BONUS: Frontend local development
 
