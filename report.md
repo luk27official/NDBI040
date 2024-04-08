@@ -41,10 +41,10 @@ In the following section, I will be using Node.js to provide examples etc. Raven
 | Source                            | from                     | session.query({ collection: "..." })             |
 | Selection                         | where                    | q1.whereEquals('name', name) //or .whereExists() |
 | Aggregation/aggregation functions | group by, count(), sum() | q1.groupBy('name') //.count()                    |
-| Join                              | (include)                | ?                                                |
-| Graph Traversal  X (JOIN)         | (include)                | ?                                                |
+| Join                              | (load)                   | ?                                                |
+| Graph Traversal  X (JOIN)         | ?                        | ?                                                |
 | Unlimited Traversal               | ?                        | ?                                                |
-| Optional                          | (include)                | ?                                                |
+| Optional                          | ?                        | ?                                                |
 | Union                             | ?                        | ?                                                |
 | Intersection                      | intersect                | q1.intersect()                                   |
 | The Difference                    | ?                        | ?                                                |
@@ -59,88 +59,27 @@ In the following section, I will be using Node.js to provide examples etc. Raven
 **Perform deployment of the DBMS (e.g. in Docker) and perform an experimental analysis of the
 querying:**
 
-For example, deploy a database system in Docker, prepare the dataset (IMDb/Yelp) for querying and
-measure the times needed to execute each query (3.1 - 7) below, if possible. Run each query 20 times,
-remove the minimum/maximum and then determine the average time (or standard deviation).
-Assumptions:
-- Queries can be trivial and should be trivial, i.e. don't use aggregation in a projection query, don't add
-join in an aggregation query, etc.
-- The goal is to verify the performance of a particular aspect of querying, e.g. just aggregation
-(independent of other constructs) or conjunction
+Queries with explanations are in the `queries.md` file, results in the `results.csv` file. To run the queries, see the `query_executor.py` file.
 
-**3.1. Selection, Projection, Source of data**
-3.1.1 Filtering on a non-indexed column, exact match, e.g., select actor with the name "Arnold" (attribute
-name is not indexed!)
-SELECT * FROM Actors WHERE name = "Arnold";
-3.1.2 Filtering on a non-indexed column, range query, e.g., select actors with salary between 25000 and
-35000 (once again, column "salary" is not indexed!)
-SELECT * FROM Actors WHERE salary BETWEEN '25000' AND '35000';
-3.1.3 Filtering on indexed column, exact match, e.g., select actor with age equal to 30 (attribute age is
-indexed!)
-SELECT * FROM Actors WHERE age = 30;
-3.1.4 Filtering on indexed column, range query, e.g., select actors with age between 30 and 45 (attribute
-age is indexed!)
-SELECT * FROM Actors WHERE age BETWEEN '30' AND '45';
+| Query   | RQL avg (ms) | Node.js avg (ms) |
+| ------- | ------------ | ---------------- |
+| 3.1.1*  | ~6100        |                  |
+| 3.1.2*  | ~15200       |                  |
+| 3.1.3   | 120.95       |                  |
+| 3.1.4   | 463.45       |                  |
+| 3.2.1   | 8.2          |                  |
+| 3.2.2** | -            |                  |
+| 3.3.1*  | -            |                  |
+| 3.3.2   | 1950.7       |                  |
+| 3.3.3   | 2630.7       |                  |
+| 3.3.4** | -            |                  |
+| 3.3.5** | -            |                  |
+| 3.4.1** | -            |                  |
+| 3.4.2   | 530.75       |                  |
+| 3.4.3** | -            |                  |
+| 3.5.1*  | ~14300       |                  |
+| 3.5.2   | 997.8        |                  |
+| 3.6.1   | 799.65       |                  |
+| 3.7     | 99.9         |                  |
 
-**3.2 Aggregation**
-3.2.1 Use aggregation function count, e.g., count number of actors per age
-SELECT age, COUNT(*) AS actorsCount FROM Actors GROUP BY age;
-3.2.2 Similarly, express a query for aggregate function MAX
-
-**3.3 Join (or graph traversal)**
-
-3.3.1 Joining / traversal where two entities are connected by non-indexed columns, e.g., join movies and
-actors where movies were filmed in the same year as actor was born
-SELECT *
-FROM Actors AS a INNER JOIN Movies AS m ON a.year_of_birth = m.year;
-3.3.2 Joining / traversal over indexed column, e.g., find names of all actors in each movie
-3.3.3 Complex join involving multiple JOINS, e.g., over 5+ tables or graph traversal over 3 types of node
-labels and 2 types of edge labels
-Complex query with JOINS to retrieve order details
-SELECT *
-FROM Actor a
- JOIN
- Acts am ON a.customerId = aa.customerId
- JOIN
- Movie m ON am.movieId = m.movieId
- JOIN
- Directed dm ON m.movieId = dn.movieId
- JOIN
- Director d ON d.directorId = dm.directorId;
-MATCH (a:Actor)-[am:Acts]->(m:Movie-[dn:Directed]->(d:Director))
-RETURN ...
-3.3.4 Recursive query, e.g., find all direct and indirect relationships between people
-SQL: WITH RECURSIVE query
-3.3.5 Optional traversal
-SQL: LEFT OUTER JOIN
-Cypher: OPTIONAL MATCH
-Get a list of all people and their friend count (0 if they have no friends)
-SELECT P1.personId,
- P1.firstName,
- P1.lastName,
- COUNT(P2.personId) AS friendCount
-FROM Person P1
- LEFT OUTER JOIN Person_Person PP on P1.personId = PP.personId1
- LEFT OUTER JOIN Person P2 on PP.personId2 = P2.personId
-GROUP BY P1.personId;
-
-**3.4 Set operations**
-3.4.1 Union, e.g., get a list of contacts (email and phone) for both Actors and Directors
-3.4.2 Intersection, e.g., get a list of shared contacts between actors and directors
-3.4.3 Difference, e.g., find a list of contacts that are exclusive for directors (e.g., no actors has the same
-contact)
-
-**3.5 Sorting**
-3.5.1 Sorting over non-indexed column, e.g., sort actors by salary
-SELECT * FROM Actors ORDER BY salary;
-3.5.2 Sorting over indexed column, e.g., sort actors by age
-SELECT * FROM Actors ORDER BY age;
-
-**3.6 Distinct**
-3.6.1 Apply distinct, e.g., find unique combinations of name,surname in the table of Actors
-SELECT DISTINCT name, surname FROM Actors;
-
-**3.7 MapReduce** (or equivalent aggregation), e.g., find the number of movies played by actor and only
-those who have played at least in 1 movie
-
-The result of this phase will be a table/graph with average of measured times, e.g.: **add a csv table**
+Meanings: (*) stands for manual average - autoindex gets created automatically, (**) stands for unavailable feature
