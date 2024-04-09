@@ -3,18 +3,19 @@
 In the following section, I will be using Node.js to provide examples etc. RavenDB provides support for C#, Java, Python and Node.js.
 
 - How is the data model implemented?
-  - In RavenDB, data is saved purely in JSON documents. Although RavenDB is a document database, it can serve as a key-value database as well (but internally, the data is saved in the same way). The documents are stored in collections which allows faster operations when using indexes. In addition to the classic documents, RavenDB allows to store binary data as so-called attachments related to existing documents. Internally, a custom storage engine called "Voron" is implemented to store the data. It uses B+ trees for the JSON documents to organize the data efficently, for binary files it uses a special "raw data section" that is not documented further. An important aspect in RavenDB is that the transactions follow the ACID protocol for documents and BASE protocol for indexes.
+  - In RavenDB, data is saved purely in JSON documents. Although RavenDB is a document database, it can serve as a key-value database as well (but internally, the data is saved in the same way). The documents are stored in collections which allows faster operations when using indexes. In addition to the classic documents, RavenDB allows to store binary data as so-called attachments related to existing documents. Internally, a custom storage engine called "Voron" is implemented to store the data. It uses B+ trees for the JSON documents to organize the data efficently, for binary files it uses a special "raw data section" that is not documented further. An important aspect in RavenDB is that the transactions follow the ACID protocol for documents and BASE protocol for indexes which plays a significant role when working with the data.
   - https://ravendb.net/docs/article-page/6.0/nodejs/server/storage/storage-engine
 - How can different models be linked and worked with?
-  - RavenDB supports only two types of files - JSON documents and binary files. The binary files are referenced from the documents and there is not much one may do with these. CSV files may be imported to RavenDB as well, but when importing CSV files, there is a specialized expected format - an example follows.
+  - RavenDB supports only two types of files - JSON documents and binary files. The binary files are referenced from the documents and there is not much to do with them. CSV files may be imported to RavenDB as well, but when importing CSV files, there is a specialized expected format - an example follows.
   ```csv
   @id,Name,NestedObject.Name,ArrayObject,@metadata.@collection
   Samples/1-A,Import from CSV,Inner Object,"[1,2,3,4]",Samples
   ```
-  Similarly, there exists an option to import data from SQL databases - there is a migration engine that will transform the data from an existing SQL database to JSON file. There are many more sources that allow data importing, but internally, the data is always stored in JSON. This means that there is just one type of queries.
+  Similarly, there exists an option to import data from SQL databases - there is a migration engine that will transform the data from an existing SQL database to JSON file.
+  There are many more sources that allow data importing, but the important fact is that internally, the data is always stored in JSON.
   - https://ravendb.net/docs/article-page/6.0/nodejs/studio/database/tasks/import-data/import-from-csv
 - Are indexes over attributes represented in a particular data model supported?
-  - Yes, indexes provide the base support for the entire RavenDB system to succesfully work. For every index, there is a LINQ-style mapping function that is converted into an Apache Lucene index that provides the quick functionality. As mentioned earlier, unlike ACID-based document transactions, indexes are available through the BASE protocol. In RavenDB, there are indexes that are created automatically to enable fast search in the documents database. On every query with unspecified index, RavenDB tries to find the best-fitting index to perform the search efficiently. The best way to create indexes is by using the `IAbstractIndexCreationTask`. It is possible to index attributes, related documents, nested data, hierarchical data and spatial data. More about indexes available here:
+  - Yes, indexes provide the base support for the entire RavenDB system to succesfully work. For every index, there is a LINQ-style mapping function that is converted into an Apache Lucene index that provides the quick functionality. As mentioned earlier, unlike ACID-based document transactions, indexes are available through the BASE protocol. In RavenDB, there are indexes that are created automatically to enable fast search in the documents database. On every query with unspecified index, RavenDB tries to find the best-fitting index to perform the search efficiently. If there is no index present, an autoindex may be created to perform the task as well. The best way to create indexes from cody is by using the `IAbstractIndexCreationTask`, otherwise it is better to create them directly in the studio. It is possible to index attributes, related documents, nested data, hierarchical data and spatial data. More about indexes available here:
   - https://ravendb.net/docs/article-page/6.0/nodejs/indexes/what-are-indexes
 - What querying means are supported over the data expressed by the different supported models? For example, create and complete a table like this:
   - As there are just JSON documents, I will cover two approaches to the database. The first one is by using RQL - Raven Query Language. This language is similar to SQL and provides a convenient way to approach queries. The second one is by using Node.js `ravendb` module that provides a nice way to interact with the database from JavaScript and TypeScript. Note that in RQL, the syntax is a bit different - consider this example of RQL `from "Employees" select FirstName as EmployeeFirstName` vs SQL `SELECT FirstName AS EmployeeFirstName FROM Employees`. Also, note that all of the Node.js queries should be initialized in the following way:
@@ -63,9 +64,9 @@ Queries with explanations are in the `queries.md` file, results in the `results.
 | ------- | ------------ | ---------------- | ------------------------- |
 | 3.1.1*  | ~6100        | -                | -                         |
 | 3.1.2*  | ~15200       | -                | -                         |
-| 3.1.3   | 120.95       | 650.3            | 984.4                     |
-| 3.1.4   | 463.45       | 8406             | 10691.4                   |
-| 3.2.1   | 8.2          | 8.1              | 21.3                      |
+| 3.1.3   | 120.95       | 897.6            | 1458.2                    |
+| 3.1.4   | 463.45       | 13050.85         | 16205.55                  |
+| 3.2.1   | 8.2          | 12.15            | 29.35                     |
 | 3.2.2** | -            | -                | -                         |
 | 3.3.1*  | -            | -                | -                         |
 | 3.3.2   | 1950.7       | -                | -                         |
@@ -73,13 +74,13 @@ Queries with explanations are in the `queries.md` file, results in the `results.
 | 3.3.4** | -            | -                | -                         |
 | 3.3.5** | -            | -                | -                         |
 | 3.4.1** | -            | -                | -                         |
-| 3.4.2   | 530.75       | 610.55           | 2140.7                    |
+| 3.4.2   | 530.75       | 884.95           | 2875.85                   |
 | 3.4.3** | -            | -                | -                         |
 | 3.5.1*  | ~14300       | -                | -                         |
-| 3.5.2   | 997.8        | 11744.1          | 14921.7                   |
-| 3.6.1   | 799.65       | 4.1              | 1097                      |
-| 3.7     | 99.9         | 893.9            | 1214.1                    |
+| 3.5.2   | 997.8        | 19288.35         | 22393.75                  |
+| 3.6.1   | 799.65       | 5.05             | 1571.4                    |
+| 3.7     | 99.9         | 1386.1           | 1771.95                   |
 
-Meanings: (*) stands for manual average - autoindex gets created automatically, (**) stands for unavailable feature
+Meanings: (*) stands for manual average, because autoindex gets created automatically, (**) stands for unavailable feature
 
-To clarify the results, caching plays a role in both of the types of queries, moreover, Node.js queries are most likely converted into less-efficient SQL/RQL queries. Also, notice that Node.js queries include the JS overhead (unlike the Python queries, including the query times directly in the result). If needed, play around with the queries yourself. Overall, we may see that raw queries perform the best.
+To clarify the results, caching plays a role in both of the types of queries, moreover, Node.js queries are most likely converted into less-efficient SQL/RQL queries. Also, notice that Node.js queries include the JS overhead (unlike the Python queries, including the query times directly in the result) and the result depends on the current CPU load. If needed, play around with the queries yourself. Overall, it is safe to say that raw queries perform the best.
