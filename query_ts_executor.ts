@@ -135,13 +135,23 @@ async function main(serverUrl: string, caching: boolean) {
         for (const [query, times] of Array.from(finalResults.entries())) {
             const max = Math.max(...times);
             const min = Math.min(...times);
-            const filteredTimes = times.filter(t => t !== max && t !== min);
+
+            // find the first occurrence of max and min
+            const maxIndex = times.indexOf(max);
+            const minIndex = times.indexOf(min);
+
+            const filteredTimes = times.filter((_, i) => i !== maxIndex && i !== minIndex);
             finalResults.set(query, filteredTimes);
         }
 
         for (const [query, times] of Array.from(finalResults.entries())) {
             const avg = times.reduce((acc, val) => acc + val, 0) / times.length;
             avgResults.set(query, avg);
+        }
+
+        // write out in a csv-like format, just without the header
+        for (const [query, times] of Array.from(finalResults.entries())) {
+            console.log(`${query},${times.join(",")},${avgResults.get(query)}`);
         }
 
         console.table(Array.from(avgResults.entries()));
@@ -151,4 +161,4 @@ async function main(serverUrl: string, caching: boolean) {
     }
 };
 
-main("http://localhost:8080", true);
+main("http://localhost:8080", false);
