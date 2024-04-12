@@ -4,3 +4,4 @@ build
 .dockerignore
 **/.DS_Store
 **/node_modules
+yelp_*.json
