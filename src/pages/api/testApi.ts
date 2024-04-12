@@ -32,7 +32,14 @@ export default async function handle(
 // Function to work with RavenDB
 export async function runRavenDBExample(name: string, age: number) {
     // Define your RavenDB server URL and database name
-    const serverUrl = 'http://localhost:8080';
+    // get env variables
+    let serverUrl: string = "";
+
+    if (process.env.RAVENDB_PRODUCTION_URL === undefined) {
+        serverUrl = 'http://localhost:8080';
+    } else {
+        serverUrl = process.env.RAVENDB_PRODUCTION_URL;
+    }
     const databaseName = 'db';
 
     // Initialize the document store
@@ -46,7 +53,10 @@ export async function runRavenDBExample(name: string, age: number) {
         // Create a new document
         const newUser = {
             "name": name,
-            "age": age
+            "age": age,
+            "@metadata": {
+                "@collection": "users"
+            }
         };
 
         // Store the document
