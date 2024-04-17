@@ -33,7 +33,7 @@ def log_durations(results, run_count, file_name="results.csv"):
         f.write("query_num,")
         for i in range(1, run_count + 1 - 2):  # to eliminate max and min
             f.write(f"run_{i},")
-        f.write("Avg\n")
+        f.write("average\n")
 
         for key, value in results.items():
             value.remove(max(value))
